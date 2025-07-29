@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+
+    <ImageView
+        android:id="@+id/imageViewTitlePreview"
+        android:layout_width="111dp"
+        android:layout_height="109dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="18dp"
+        android:contentDescription="Preview of the cropped image"
+        android:scaleType="fitCenter"
+        app:layout_constraintBottom_toTopOf="@+id/textViewProcessingStatus"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.053"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/imageViewIngredientsPreview"
+        android:layout_width="111dp"
+        android:layout_height="109dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="18dp"
+        android:contentDescription="Preview of the cropped image"
+        android:scaleType="fitCenter"
+        app:layout_constraintBottom_toTopOf="@+id/textViewProcessingStatus"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/imageViewPreparationPreview"
+        android:layout_width="111dp"
+        android:layout_height="109dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="18dp"
+        android:contentDescription="Preview of the cropped image"
+        android:scaleType="fitCenter"
+        app:layout_constraintBottom_toTopOf="@+id/textViewProcessingStatus"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.956"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textViewProcessingStatus"
+        android:layout_width="279dp"
+        android:layout_height="21dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/buttonProcessCropped"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imageViewTitlePreview"
+        tools:text="Status: Waiting for cropped image" />
+
+    <TextView
+        android:id="@+id/textViewTitleResult"
+        android:layout_width="380dp"
+        android:layout_height="52dp"
+        android:layout_marginStart="18dp"
+        android:layout_marginTop="18dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="9dp"
+        android:isScrollContainer="true"
+        android:text="TextView"
+        app:layout_constraintBottom_toTopOf="@+id/ingredients"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/Titel" />
+
+    <ScrollView
+        android:id="@+id/scrollView2"
+        android:layout_width="389dp"
+        android:layout_height="108dp"
+        android:layout_marginStart="6dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="10dp"
+        app:layout_constraintBottom_toTopOf="@+id/steps"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/ingredients">
+
+        <TextView
+            android:id="@+id/textViewIngredientsResult"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="TextView"/>
+    </ScrollView>
+
+    <ScrollView
+        android:id="@+id/scrollinc"
+        android:layout_width="407dp"
+        android:layout_height="107dp"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="11dp"
+        android:layout_marginEnd="3dp"
+        android:layout_marginBottom="78dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/steps">
+
+        <TextView
+            android:id="@+id/textViewPreparationResult"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="TextView"/>
+
+    </ScrollView>
+
+    <TextView
+        android:id="@+id/Titel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="192dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="192dp"
+        android:layout_marginBottom="12dp"
+        android:text="Titel"
+        app:layout_constraintBottom_toTopOf="@+id/textViewTitleResult"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/buttonProcessCropped"
+        tools:text="Titel" />
+
+    <TextView
+        android:id="@+id/ingredients"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="176dp"
+        android:layout_marginTop="9dp"
+        android:layout_marginEnd="165dp"
+        android:layout_marginBottom="3dp"
+        android:text="ingredients"
+        app:layout_constraintBottom_toTopOf="@+id/scrollView2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewTitleResult"
+        tools:text="ingredients" />
+
+    <TextView
+        android:id="@+id/steps"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="176dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="165dp"
+        android:layout_marginBottom="11dp"
+        android:text="Steps"
+        app:layout_constraintBottom_toTopOf="@+id/scrollinc"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.205"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/scrollView2"
+        tools:text="Steps" />
+
+    <Button
+        android:id="@+id/buttonProcessCropped"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="162dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="159dp"
+        android:text="Button"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewProcessingStatus" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

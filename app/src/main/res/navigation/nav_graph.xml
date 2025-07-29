@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/FirstFragment">
+
+    <fragment
+        android:id="@+id/FirstFragment"
+        android:name="com.example.timetoclean.ImageSelectionFragment"
+        android:label="@string/first_fragment_label"
+        tools:layout="@layout/fragment_first">
+        <action
+            android:id="@+id/action_FirstFragment_to_croppingFragment"
+            app:destination="@id/croppingFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/ResultFragment"
+        android:name="com.example.timetoclean.ResultFragment"
+        android:label="@string/second_fragment_label"
+        tools:layout="@layout/fragment_second"/>
+    <fragment
+        android:id="@+id/croppingFragment"
+        android:name="com.example.timetoclean.CroppingFragment"
+        android:label="fragment_cropping"
+        tools:layout="@layout/fragment_cropping" >
+        <argument
+            android:name="imageUri"
+            app:argType="string" />
+        <action
+            android:id="@+id/crop_to_second"
+            app:destination="@id/ResultFragment" />
+    </fragment>
+
+</navigation>
