@@ -1,52 +1,84 @@
 package com.example.timetoclean
 
+import android.Manifest // For Manifest.permission.POST_NOTIFICATIONS
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.AlarmClock
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.launch
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
 import coil.load
 import com.example.timetoclean.databinding.FragmentSecondBinding
+import com.google.android.material.timepicker.MaterialTimePicker
+import com.google.android.material.timepicker.TimeFormat
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
 class ResultFragment : Fragment() {
-
     private var _binding: FragmentSecondBinding? = null
     private lateinit var extractTextViewModel: ExtractText
     private val recipeAreasViewModel: RecipeAreasViewModel by activityViewModels()
     private var currentCroppedImageUri: Uri? = null
     private var currentRecipeAreas: CropAreas? = null
+    private lateinit var timePicker: MaterialTimePicker
 
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?,
     ): View {
-
         _binding = FragmentSecondBinding.inflate(inflater, container, false)
         extractTextViewModel =
             ViewModelProvider(requireActivity())[ExtractText::class.java] // Example
         return binding.root
-
     }
 
     // Add these properties to your SecondFragment class
     private var ocrProcessingQueue: MutableList<Pair<File, String>> = mutableListOf()
     private var currentOcrQueueIndex = 0
+    private var totalMillisForTimer: Long = 0L
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            if (isGranted) {
+                // Permission is granted. Start the service with the stored time.
+                if (totalMillisForTimer > 0L) {
+                    TimerService.startTimerService(requireContext(), totalMillisForTimer)
+                }
+            } else {
+                // Explain to the user that the feature is unavailable
+                Toast
+                    .makeText(
+                        requireContext(),
+                        "Notification permission denied. Timer cannot show notifications.",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                // Optionally, you could guide them to settings, but be respectful of their choice.
+            }
+        }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
         super.onViewCreated(view, savedInstanceState)
-
 
         binding.textViewProcessingStatus.text = "Waiting for all cropped recipe areas..."
 
@@ -54,24 +86,18 @@ class ResultFragment : Fragment() {
             currentRecipeAreas = areas
             if (areas != null && recipeAreasViewModel.areAllAreasSet()) {
                 binding.buttonProcessCropped.isEnabled = true
-                binding.textViewProcessingStatus.text = "All recipe areas ready. Click to process."
-                areas.titleUri?.let { binding.imageViewTitlePreview.load(it) }
-                areas.ingredientsUri?.let { binding.imageViewIngredientsPreview.load(it) }
-                areas.preparationUri?.let { binding.imageViewPreparationPreview.load(it) }
-                Log.i("SecondFragment", "Received all cropped areas: Title: ${areas.titleUri}, Ingredients: ${areas.ingredientsUri}, Prep: ${areas.preparationUri}")
+                binding.textViewProcessingStatus.text = "Image is ready. Click to process."
+                areas.timeUri?.let { binding.imageViewTimePreview.load(it) }
+                Log.i("SecondFragment", "Received all cropped areas: Time: ${areas.timeUri}")
             } else if (areas != null) {
                 binding.buttonProcessCropped.isEnabled = false
                 var status = "Waiting for: "
-                if (areas.titleUri == null) status += "Title, "
-                if (areas.ingredientsUri == null) status += "Ingredients, "
-                if (areas.preparationUri == null) status += "Preparation"
+                if (areas.timeUri == null) status += "Time"
                 binding.textViewProcessingStatus.text = status.trimEnd(',', ' ')
             } else {
                 binding.buttonProcessCropped.isEnabled = false
-                binding.textViewProcessingStatus.text = "No recipe areas available."
-                binding.imageViewTitlePreview.setImageDrawable(null)
-                binding.imageViewIngredientsPreview.setImageDrawable(null)
-                binding.imageViewPreparationPreview.setImageDrawable(null)
+                binding.textViewProcessingStatus.text = "No areas available."
+                binding.imageViewTimePreview.setImageDrawable(null)
             }
         }
 
@@ -105,72 +131,41 @@ class ResultFragment : Fragment() {
                 }
 
                 // Clear previous results and build the queue
-                binding.textViewTitleResult.text = ""
-                binding.textViewIngredientsResult.text = ""
-                binding.textViewPreparationResult.text = ""
+                binding.textViewTimeResult.text = ""
                 binding.textViewProcessingStatus.text = "Preparing OCR queue..."
 
                 ocrProcessingQueue.clear()
                 currentOcrQueueIndex = 0
 
-                areas.titleUri?.toFileFromContentUri(requireContext())?.let { titleFile ->
-                    if (canOpenContentUri(requireContext(), areas.titleUri!!)) { // Check URI access
-                        ocrProcessingQueue.add(Pair(titleFile, "title"))
+                areas.timeUri?.toFileFromContentUri(requireContext())?.let { timeFile ->
+                    if (canOpenContentUri(requireContext(), areas.timeUri!!)) { // Check URI access
+                        ocrProcessingQueue.add(Pair(timeFile, "time"))
                     } else {
-                        Log.e("SecondFragment", "Cannot access Title URI: ${areas.titleUri}")
-                        binding.textViewTitleResult.text = "Error: Cannot access Title image file."
-                        // Since we couldn't access it, we can consider this "task" for the title as failed for the queue.
+                        Log.e("SecondFragment", "Cannot access Time URI: ${areas.timeUri}")
+                        binding.textViewTimeResult.text = "Error: Cannot access Time image file."
                         // ViewModel will also signal this when it tries and fails.
                     }
-                } ?: run { // Changed to 'run' for statements if the 'let' was null
-                    if (areas.titleUri != null) { // Log only if URI existed but conversion failed
-                        Log.e("SecondFragment", "Failed to convert Title URI to File: ${areas.titleUri}")
-                        binding.textViewTitleResult.text = "Error: Title image file conversion failed."
-                    }
-                    // If areas.titleUri was null in the first place, this block is also skipped by 'let', so no log needed here.
-                }
-
-
-                areas.ingredientsUri?.toFileFromContentUri(requireContext())?.let { ingredientsFile ->
-                    if (canOpenContentUri(requireContext(), areas.ingredientsUri!!)) {
-                        ocrProcessingQueue.add(Pair(ingredientsFile, "ingredients"))
-                    } else {
-                        Log.e("SecondFragment", "Cannot access Ingredients URI: ${areas.ingredientsUri}")
-                        binding.textViewIngredientsResult.text = "Error: Cannot access Ingredients image file."
-                    }
-                } ?: run { // Changed to 'run'
-                    if (areas.ingredientsUri != null) {
-                        Log.e("SecondFragment", "Failed to convert Ingredients URI to File: ${areas.ingredientsUri}")
-                        binding.textViewIngredientsResult.text = "Error: Ingredients image file conversion failed."
+                } ?: run {
+                    // Changed to 'run' for statements if the 'let' was null
+                    if (areas.timeUri != null) { // Log only if URI existed but conversion failed
+                        Log.e("SecondFragment", "Failed to convert Time URI to File: ${areas.timeUri}")
+                        binding.textViewTimeResult.text = "Error: Time image file conversion failed."
                     }
                 }
-
-                areas.preparationUri?.toFileFromContentUri(requireContext())?.let { preparationFile ->
-                    if (canOpenContentUri(requireContext(), areas.preparationUri!!)) {
-                        ocrProcessingQueue.add(Pair(preparationFile, "preparation"))
-                    } else {
-                        Log.e("SecondFragment", "Cannot access Preparation URI: ${areas.preparationUri}")
-                        binding.textViewPreparationResult.text = "Error: Cannot access Preparation image file."
-                    }
-                } ?: run { // Changed to 'run'
-                    if (areas.preparationUri != null) {
-                        Log.e("SecondFragment", "Failed to convert Preparation URI to File: ${areas.preparationUri}")
-                        binding.textViewPreparationResult.text = "Error: Preparation image file conversion failed."
-                    }
-                }
-
-
                 if (ocrProcessingQueue.isNotEmpty()) {
                     binding.buttonProcessCropped.isEnabled = false // Disable button while processing
                     processNextAreaInQueue()
                 } else {
                     binding.textViewProcessingStatus.text = "No valid image files found to process."
                 }
-
             } ?: run {
                 Log.w("SecondFragment", "Process button clicked, but no currentRecipeAreas.")
                 binding.textViewProcessingStatus.text = "No recipe areas available to process."
             }
+        }
+
+        binding.buttonPicker.setOnClickListener {
+            showPicker(0, 0)
         }
 
         // --- OCR ViewModel Observers ---
@@ -201,37 +196,177 @@ class ResultFragment : Fragment() {
             binding.textViewProcessingStatus.text = progressText
         }
 
-        extractTextViewModel.titleResult.observe(viewLifecycleOwner) { titleText ->
-            if (titleText != null) {
-                binding.textViewTitleResult.text = titleText.trim().replace("\n", " ")  // Display the full string (text or error message)
-                Log.i("SecondFragment", "Title OCR Data: $titleText")
+        extractTextViewModel.timeResult.observe(viewLifecycleOwner) { timeText ->
+            if (timeText != null) {
+                binding.textViewTimeResult.text = timeText.trim().replace("\n", " ") // Display the full string (text or error message)
+                Log.i("SecondFragment", "Time OCR Data: $timeText")
+                parseTimerStringAndShowPicker(timeText)
             } else {
                 // If null means it was cleared before processing this area
-                // binding.textViewTitleResult.text = "Processing title..." // Or keep it blank
-                Log.i("SecondFragment", "Title OCR Data received null (likely cleared).")
-            }
-        }
-
-        extractTextViewModel.ingredientsResult.observe(viewLifecycleOwner) { ingredientsText ->
-            if (ingredientsText != null) {
-                val formattedIngredients = formatOcrList(ingredientsText)
-                binding.textViewIngredientsResult.text = formattedIngredients
-                Log.i("SecondFragment", "Ingredients OCR Data: $ingredientsText")
-            } else {
-                Log.i("SecondFragment", "Ingredients OCR Data received null (likely cleared).")
-            }
-        }
-
-        extractTextViewModel.preparationResult.observe(viewLifecycleOwner) { preparationText ->
-            if (preparationText != null) {
-                val formattedPreparation = formatOcrList(preparationText)
-                binding.textViewPreparationResult.text = formattedPreparation
-                Log.i("SecondFragment", "Preparation OCR Data: $preparationText")
-            } else {
-                Log.i("SecondFragment", "Preparation OCR Data received null (likely cleared).")
+                Log.i("SecondFragment", "Time OCR Data received null (likely cleared).")
             }
         }
     } // End of onViewCreated
+
+    fun showPicker(
+        hour: Int,
+        minute: Int,
+    ) {
+        val picker =
+            MaterialTimePicker
+                .Builder()
+                .setTimeFormat(TimeFormat.CLOCK_24H)
+                .setHour(hour)
+                .setMinute(minute)
+                .setTitleText("Select Runtime")
+                .build()
+
+        picker.show(parentFragmentManager, "TIME_PICKER")
+
+//        picker.addOnPositiveButtonClickListener {
+//            val selected = String.format("%02d:%02d", picker.hour, picker.minute)
+//            setNativeTimer(requireContext(), picker.hour, picker.minute, "TimeToClean Timer")
+//        }
+        picker.addOnPositiveButtonClickListener {
+            val hours = picker.hour
+            val minutes = picker.minute
+            val totalMillis = (hours.toLong() * 60L + minutes.toLong()) * 60L * 1000L
+            // TimerService.startTimerService(requireContext(), totalMillis)
+            val calculatedTotalMillis = (hours.toLong() * 60L + minutes.toLong()) * 60L * 1000L
+
+            if (calculatedTotalMillis > 0) {
+                // Call your new method to handle permission check and service start
+                checkAndStartTimerService(calculatedTotalMillis)
+            } else {
+                Toast.makeText(requireContext(), "Please select a valid duration.", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun checkAndStartTimerService(timeInMillis: Long) {
+        this.totalMillisForTimer = timeInMillis // Store the time in case we need to request permission
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { // Android 13 (API 33)
+            when {
+                ContextCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.POST_NOTIFICATIONS,
+                ) == PackageManager.PERMISSION_GRANTED -> {
+                    // Permission is already granted
+                    TimerService.startTimerService(requireContext(), timeInMillis)
+                }
+                shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
+                    // Explain to the user why you need the permission.
+                    // This is a good place to show a dialog or a Snackbar.
+                    // For this example, we'll just log and then request.
+                    Log.i("ResultFragment", "Showing rationale for notification permission.")
+                    // You should show a proper UI explanation here before launching.
+                    // For example, a MaterialAlertDialog:
+                    // MaterialAlertDialogBuilder(requireContext())
+                    //    .setTitle("Permission Needed")
+                    //    .setMessage("This app needs notification permission to show timer progress and completion alerts.")
+                    //    .setPositiveButton("OK") { _, _ ->
+                    //        requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    //    }
+                    //    .setNegativeButton("Cancel", null)
+                    //    .show()
+                    // For simplicity in this direct answer, launching directly:
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+                else -> {
+                    // Directly ask for the permission (first time or if rationale not needed)
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+        } else {
+            // Pre-Android 13, no runtime permission needed for notifications
+            TimerService.startTimerService(requireContext(), timeInMillis)
+        }
+    }
+
+    fun parseTimerStringAndShowPicker(ocrResult: String) {
+        // Remove all colons to work with just the numbers first
+        val numbersOnly = ocrResult.replace(":", "")
+
+        var hours: Int? = null
+        var minutes: Int? = null
+
+        // 1. Try direct "hh:mm" match (or "h:mm", "hh:m", "h:m")
+        if (ocrResult.contains(":")) {
+            val parts = ocrResult.split(":")
+            if (parts.size == 2) {
+                val hPart = parts[0].toIntOrNull()
+                val mPart = parts[1].toIntOrNull()
+
+                if (hPart != null && mPart != null) {
+                    // Basic validation for typical timer values
+                    if (hPart in 0..99 && mPart in 0..59) { // Allow hours > 23 for timers
+                        hours = hPart
+                        minutes = mPart
+                    }
+                }
+            }
+        }
+
+        // 2. If direct match failed or wasn't attempted, try guessing based on length
+        if (hours == null || minutes == null) {
+            when (numbersOnly.length) {
+                1 -> { // e.g., "5" -> 00:05
+                    minutes = numbersOnly.toIntOrNull()
+                }
+                2 -> { // e.g., "45" -> 00:45
+                    minutes = numbersOnly.toIntOrNull()
+                }
+                3 -> { // e.g., "145" -> 01:45
+                    hours = numbersOnly.substring(0, 1).toIntOrNull()
+                    minutes = numbersOnly.substring(1).toIntOrNull()
+                }
+                4 -> { // e.g., "1230" -> 12:30
+                    hours = numbersOnly.substring(0, 2).toIntOrNull()
+                    minutes = numbersOnly.substring(2).toIntOrNull()
+                }
+                5 -> { // e.g., "12345" -> 12:34 (assuming last two are minutes)
+                    // or could be "123:45" -> 1:23 (less likely for timers if : is missing)
+                    // Prioritizing hh:mm structure
+                    hours = numbersOnly.substring(0, 3).toIntOrNull() // Could be too large, validated later
+                    minutes = numbersOnly.substring(3).toIntOrNull()
+                    // If the above results in invalid minutes, try another split
+                    if (minutes == null || minutes !in 0..59) {
+                        hours = numbersOnly.substring(0, 2).toIntOrNull()
+                        minutes = numbersOnly.substring(2, 4).toIntOrNull() // This is a bit ambiguous with 5 digits
+                        // For "12345", this would be 12:34
+                    }
+                }
+                6 -> { // e.g., "123456" -> 12:34 (assuming hh:mm:ss, taking hh:mm)
+                    hours = numbersOnly.substring(0, 2).toIntOrNull()
+                    minutes = numbersOnly.substring(2, 4).toIntOrNull()
+                }
+                // Add more cases if you expect longer strings like "1234567" (h:mm:ss.S)
+                // or if hours can exceed 2 digits significantly.
+            }
+        }
+
+        // Validate and call showPicker
+        if (hours != null && minutes != null) {
+            // Final validation, especially for guessed values
+            if (hours in 0..99 && minutes in 0..59) { // Allow hours > 23 for timers
+                showPicker(hours, minutes)
+                println("Parsed: hh=$hours, mm=$minutes (from $ocrResult)") // For debugging
+                return
+            }
+        } else if (minutes != null && hours == null) { // Case where only minutes were parsed (e.g. "45")
+            if (minutes in 0..59) {
+                showPicker(0, minutes) // Assume 0 hours
+                println("Parsed: hh=0, mm=$minutes (from $ocrResult)") // For debugging
+                return
+            }
+        }
+
+        // Fallback or error handling if no valid interpretation was found
+        Log.e("SecondFragment", "Could not reliably parse timer string: $ocrResult")
+        // Optionally, call showPicker with default values or show an error
+        // showPicker(0, 0) // Example fallback
+    }
 
     // Add this new function to your SecondFragment class
     private fun processNextAreaInQueue() {
@@ -249,12 +384,13 @@ class ResultFragment : Fragment() {
             // currentOcrQueueIndex = 0
         }
     }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
-
 }
+
 // In ResultFragment.kt
 private fun formatOcrList(rawText: String?): String {
     if (rawText.isNullOrBlank()) {
@@ -284,10 +420,10 @@ private fun formatOcrList(rawText: String?): String {
     // Example: "Item A\nItem B\n\nItem C"
     // Initial split by "\n\n" -> ["Item A\nItem B", "Item C"]
     // We then want to split "Item A\nItem B" further.
-    val finalLines = initialSplitItems.flatMap { item ->
-         listOf(item)
-
-    }
+    val finalLines =
+        initialSplitItems.flatMap { item ->
+            listOf(item)
+        }
 
     return finalLines
         .map { it.trim().replace("\n", "") } // Trim each potential line
@@ -297,7 +433,6 @@ private fun formatOcrList(rawText: String?): String {
             "# $item"
         }
 }
-
 
 fun Uri.toFileFromContentUri(context: Context): File? {
     if (this.scheme != "content") {
@@ -329,7 +464,11 @@ fun Uri.toFileFromContentUri(context: Context): File? {
 
     return file
 }
-fun canOpenContentUri(context: Context, uri: Uri): Boolean {
+
+fun canOpenContentUri(
+    context: Context,
+    uri: Uri,
+): Boolean {
     Log.d("UriCheck_Detail", "Attempting to open URI: $uri with context: $context")
     if (uri.scheme != "content") {
         Log.w("UriCheck_Detail", "URI scheme is not 'content': $uri")
@@ -350,11 +489,18 @@ fun canOpenContentUri(context: Context, uri: Uri): Boolean {
         Log.w("UriCheck_Detail", "InputStream was null for $uri without an exception after check.")
         return false
     } catch (e: java.io.FileNotFoundException) {
-        Log.e("UriCheck_Detail", "FileNotFoundException for $uri during openInputStream. Path may not exist or permissions issue at resolver level.", e)
+        Log.e(
+            "UriCheck_Detail",
+            "FileNotFoundException for $uri during openInputStream. Path may not exist or permissions issue at resolver level.",
+            e,
+        )
         // AT THIS POINT, also try to manually reconstruct and check the File path
         // This is ONLY for debugging if FileProvider is behaving unexpectedly
         val expectedCacheFile = File(context.cacheDir, uri.lastPathSegment ?: "error_no_last_segment")
-        Log.e("UriCheck_Detail", "DEBUG: Does expected file exist NOW? Path: ${expectedCacheFile.absolutePath}, Exists: ${expectedCacheFile.exists()}, Size: ${expectedCacheFile.length()}")
+        Log.e(
+            "UriCheck_Detail",
+            "DEBUG: Does expected file exist NOW? Path: ${expectedCacheFile.absolutePath}, Exists: ${expectedCacheFile.exists()}, Size: ${expectedCacheFile.length()}",
+        )
         return false
     } catch (e: SecurityException) {
         Log.e("UriCheck_Detail", "SecurityException for $uri during openInputStream. Permission denied at resolver level.", e)
@@ -378,6 +524,6 @@ fun makeWhitespaceVisible(text: String?): String {
     }
     return text
         .replace("\n", "[NL]") // Show [NL] and keep the newline for visual structure
-        .replace("\r", "[CR]")   // Carriage return is usually consumed or part of \n
+        .replace("\r", "[CR]") // Carriage return is usually consumed or part of \n
         .replace("\t", "[TAB]")
 }

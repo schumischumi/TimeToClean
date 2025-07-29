@@ -5,11 +5,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
-
 data class CropAreas(
-    val titleUri: Uri? = null,
-    val ingredientsUri: Uri? = null,
-    val preparationUri: Uri? = null
+    val timeUri: Uri? = null,
 )
 
 class RecipeAreasViewModel : ViewModel() { // Renamed for clarity
@@ -21,31 +18,18 @@ class RecipeAreasViewModel : ViewModel() { // Renamed for clarity
     val cropError: LiveData<String?> = _cropError
 
     // --- Methods to set individual areas ---
-    fun setTitleUri(uri: Uri?) {
+    fun setTimeUri(uri: Uri?) {
         val currentAreas = _croppedAreas.value ?: CropAreas()
-        _croppedAreas.value = currentAreas.copy(titleUri = uri)
+        _croppedAreas.value = currentAreas.copy(timeUri = uri)
         if (uri == null) _cropError.value = null // Clear general error if a part is cleared
-    }
-
-    fun setIngredientsUri(uri: Uri?) {
-        val currentAreas = _croppedAreas.value ?: CropAreas()
-        _croppedAreas.value = currentAreas.copy(ingredientsUri = uri)
-        if (uri == null) _cropError.value = null
-    }
-
-    fun setPreparationUri(uri: Uri?) {
-        val currentAreas = _croppedAreas.value ?: CropAreas()
-        _croppedAreas.value = currentAreas.copy(preparationUri = uri)
-        if (uri == null) _cropError.value = null
     }
 
     fun setCropError(errorMessage: String?) {
         _cropError.value = errorMessage
     }
 
-    fun areAllAreasSet(): Boolean {
-        return _croppedAreas.value?.let {
-            it.titleUri != null && it.ingredientsUri != null && it.preparationUri != null
+    fun areAllAreasSet(): Boolean =
+        _croppedAreas.value?.let {
+            it.timeUri != null
         } ?: false
-    }
 }

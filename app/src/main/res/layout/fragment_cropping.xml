@@ -36,7 +36,7 @@
 
     <Button
         android:id="@+id/buttonConfirmCurrentArea"
-        android:layout_width="209dp"
+        android:layout_width="140dp"
         android:layout_height="46dp"
         android:layout_marginStart="52dp"
         android:layout_marginTop="2dp"
@@ -63,7 +63,7 @@
 
     <Button
         android:id="@+id/buttonDoneAllCropping"
-        android:layout_width="192dp"
+        android:layout_width="140dp"
         android:layout_height="45dp"
         android:layout_marginStart="10dp"
         android:layout_marginTop="1dp"
@@ -73,6 +73,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/buttonConfirmCurrentArea"
-        app:layout_constraintTop_toBottomOf="@+id/textViewCurrentSelectionPrompt" />
+        app:layout_constraintTop_toBottomOf="@+id/textViewCurrentSelectionPrompt"
+        app:layout_constraintVertical_bias="0.507" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -14,9 +14,9 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.timetoclean.databinding.FragmentCroppingBinding // Your binding
@@ -26,17 +26,13 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import androidx.core.net.toUri
 
 enum class CropStage {
-    SELECTING_TITLE,
-    SELECTING_INGREDIENTS,
-    SELECTING_PREPARATION,
-    DONE
+    SELECTING_TIME,
+    DONE,
 }
 
 class CroppingFragment : Fragment() {
-
     private var _binding: FragmentCroppingBinding? = null
     private val binding get() = _binding!!
     private val args: CroppingFragmentArgs by navArgs()
@@ -49,23 +45,24 @@ class CroppingFragment : Fragment() {
     private var startX = 0f
     private var startY = 0f
 
-    private var currentCropStage = CropStage.SELECTING_TITLE
+    private var currentCropStage = CropStage.SELECTING_TIME
 
-    private var tempTitleFile: File? = null
-    private var tempIngredientsFile: File? = null
-    private var tempPreparationFile: File? = null
+    private var tempTimeFile: File? = null
     private var currentImageUri: Uri? = null
 
-
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?,
     ): View {
         _binding = FragmentCroppingBinding.inflate(inflater, container, false)
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
         super.onViewCreated(view, savedInstanceState)
         try {
             val imageUriString = args.imageUri
@@ -76,10 +73,10 @@ class CroppingFragment : Fragment() {
             currentImageUri?.let { uri ->
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     val source = android.graphics.ImageDecoder.createSource(requireContext().contentResolver, uri)
-                    originalBitmap = android.graphics.ImageDecoder.decodeBitmap(source) { decoder, _, _ ->
-                        decoder.isMutableRequired = true
-                    }
-
+                    originalBitmap =
+                        android.graphics.ImageDecoder.decodeBitmap(source) { decoder, _, _ ->
+                            decoder.isMutableRequired = true
+                        }
                 } else {
                     // For older versions, use MediaStore.Images.Media.getBitmap (deprecated in API 29)
                     // This requires READ_EXTERNAL_STORAGE permission for Uris not from your own app
@@ -90,7 +87,6 @@ class CroppingFragment : Fragment() {
                     originalBitmap = MediaStore.Images.Media.getBitmap(requireContext().contentResolver, uri)
                 }
             }
-
         } catch (e: Exception) {
             Log.e("CroppingFragment", "Error parsing URI or loading Bitmap from URI: ${args.imageUri}", e)
             originalBitmap = null // Ensure bitmap is null on error
@@ -113,7 +109,9 @@ class CroppingFragment : Fragment() {
                 if (selectionRect.width() > 0 && selectionRect.height() > 0) {
                     processCurrentAreaSelection(bmp, selectionRect)
                 } else {
-                    recipeAreasViewModel.setCropError("Please select an area for ${currentCropStage.name.toLowerCase(Locale.ROOT).replace('_',' ')}.")
+                    recipeAreasViewModel.setCropError(
+                        "Please select an area for ${currentCropStage.name.toLowerCase(Locale.ROOT).replace('_',' ')}.",
+                    )
                 }
             }
         }
@@ -137,18 +135,10 @@ class CroppingFragment : Fragment() {
         binding.buttonConfirmCurrentArea.isEnabled = originalBitmap != null // Enable if image is loaded
 
         when (currentCropStage) {
-            CropStage.SELECTING_TITLE -> {
-                binding.textViewCurrentSelectionPrompt.text = "Select Title Area"
+            CropStage.SELECTING_TIME -> {
+                binding.textViewCurrentSelectionPrompt.text = "Select Time Area"
                 binding.buttonDoneAllCropping.visibility = View.GONE
-                binding.buttonConfirmCurrentArea.text = "Confirm Title Area"
-            }
-            CropStage.SELECTING_INGREDIENTS -> {
-                binding.textViewCurrentSelectionPrompt.text = "Select Ingredients Area"
-                binding.buttonConfirmCurrentArea.text = "Confirm Ingredients Area"
-            }
-            CropStage.SELECTING_PREPARATION -> {
-                binding.textViewCurrentSelectionPrompt.text = "Select Preparation Area"
-                binding.buttonConfirmCurrentArea.text = "Confirm Preparation Area"
+                binding.buttonConfirmCurrentArea.text = "Confirm Time Area"
             }
             CropStage.DONE -> {
                 binding.textViewCurrentSelectionPrompt.text = "All areas selected!"
@@ -160,7 +150,10 @@ class CroppingFragment : Fragment() {
         }
     }
 
-    private fun processCurrentAreaSelection(sourceBitmap: Bitmap, cropRectInViewCoords: RectF) {
+    private fun processCurrentAreaSelection(
+        sourceBitmap: Bitmap,
+        cropRectInViewCoords: RectF,
+    ) {
         // --- Coordinate Transformation (same as before) ---
         val imageView = binding.imageViewToCrop
         val displayMatrix = Matrix()
@@ -179,13 +172,14 @@ class CroppingFragment : Fragment() {
         }
 
         try {
-            val croppedBitmap = Bitmap.createBitmap(
-                sourceBitmap,
-                bitmapSpaceRect.left.toInt(),
-                bitmapSpaceRect.top.toInt(),
-                bitmapSpaceRect.width().toInt(),
-                bitmapSpaceRect.height().toInt()
-            )
+            val croppedBitmap =
+                Bitmap.createBitmap(
+                    sourceBitmap,
+                    bitmapSpaceRect.left.toInt(),
+                    bitmapSpaceRect.top.toInt(),
+                    bitmapSpaceRect.width().toInt(),
+                    bitmapSpaceRect.height().toInt(),
+                )
 
             // Save the cropped bitmap to a temporary file
             val areaName = currentCropStage.name.toLowerCase(Locale.ROOT)
@@ -198,7 +192,10 @@ class CroppingFragment : Fragment() {
                         Log.i("CroppingFragment", "Bitmap.compress successful for ${tempCroppedFile.name}")
                         saveSuccessful = true
                     } else {
-                        Log.e("CroppingFragment", "Bitmap.compress returned false for ${tempCroppedFile.name}. File might be incomplete or not correctly written.")
+                        Log.e(
+                            "CroppingFragment",
+                            "Bitmap.compress returned false for ${tempCroppedFile.name}. File might be incomplete or not correctly written.",
+                        )
                         // tempCroppedFile might exist but be invalid/empty
                     }
                 }
@@ -211,46 +208,42 @@ class CroppingFragment : Fragment() {
                 val fileSize = tempCroppedFile.length()
                 Log.i("CroppingFragment", "CONFIRMED: File exists at ${tempCroppedFile.absolutePath}, Size: $fileSize bytes")
                 if (fileSize == 0L) {
-                    Log.e("CroppingFragment", "ERROR: Cropped file for '$areaName' exists BUT IS EMPTY: ${tempCroppedFile.absolutePath}. URI will likely fail.")
+                    Log.e(
+                        "CroppingFragment",
+                        "ERROR: Cropped file for '$areaName' exists BUT IS EMPTY: ${tempCroppedFile.absolutePath}. URI will likely fail.",
+                    )
                     // Handle error: Do not proceed with this file, maybe show an error to the user.
                     recipeAreasViewModel.setCropError("Failed to save cropped $areaName correctly (empty file).")
                     return // Exit because the file is invalid
                 }
             } else {
-                Log.e("CroppingFragment", "ERROR: Cropped file for '$areaName' DOES NOT EXIST or save failed at ${tempCroppedFile.absolutePath} after attempting save.")
+                Log.e(
+                    "CroppingFragment",
+                    "ERROR: Cropped file for '$areaName' DOES NOT EXIST or save failed at ${tempCroppedFile.absolutePath} after attempting save.",
+                )
                 // Handle error: Do not proceed to generate a URI.
                 recipeAreasViewModel.setCropError("Failed to save cropped $areaName.")
                 return // Exit because the file is invalid or wasn't saved
             }
             val authority = "${requireContext().packageName}.fileprovider"
-            val croppedFileUri = FileProvider.getUriForFile(
-                requireContext(),
-                authority,
-                tempCroppedFile
-            )
+            val croppedFileUri =
+                FileProvider.getUriForFile(
+                    requireContext(),
+                    authority,
+                    tempCroppedFile,
+                )
 
             // Update the ViewModel based on the current stage
             when (currentCropStage) {
-                CropStage.SELECTING_TITLE -> {
-                    recipeAreasViewModel.setTitleUri(croppedFileUri)
-                    tempTitleFile = tempCroppedFile // Keep reference if needed for cleanup
-                    currentCropStage = CropStage.SELECTING_INGREDIENTS
-                }
-                CropStage.SELECTING_INGREDIENTS -> {
-                    recipeAreasViewModel.setIngredientsUri(croppedFileUri)
-                    tempIngredientsFile = tempCroppedFile
-                    currentCropStage = CropStage.SELECTING_PREPARATION
-                }
-                CropStage.SELECTING_PREPARATION -> {
-                    recipeAreasViewModel.setPreparationUri(croppedFileUri)
-                    tempPreparationFile = tempCroppedFile
+                CropStage.SELECTING_TIME -> {
+                    recipeAreasViewModel.setTimeUri(croppedFileUri)
+                    tempTimeFile = tempCroppedFile // Keep reference if needed for cleanup
                     currentCropStage = CropStage.DONE
                 }
                 CropStage.DONE -> { /* Should not happen here */ }
             }
             Log.i("CroppingFragment", "Cropped $areaName saved to URI: $croppedFileUri")
             updateUiForCurrentStage() // Update UI for the next stage
-
         } catch (e: Exception) {
             Log.e("CroppingFragment", "Error cropping/saving for $currentCropStage", e)
             recipeAreasViewModel.setCropError("Failed to crop ${currentCropStage.name.toLowerCase(Locale.ROOT)}: ${e.message}")
@@ -265,11 +258,6 @@ class CroppingFragment : Fragment() {
             // deleteOnExit() // Consider if you want these to persist briefly or be cleaned up
         }
     }
-
-    // setupManualSelection(), normalizeAndClampRect(), updateOverlayBounds() remain similar
-    // ... (ensure they are present and working) ...
-
-// In CroppingFragment.kt
 
     private fun setupManualSelection() {
         binding.imageViewToCrop.setOnTouchListener { view, event ->
@@ -314,7 +302,15 @@ class CroppingFragment : Fragment() {
         }
     }
 
-    private fun normalizeAndClampRect(rect: RectF, x1: Float, y1: Float, x2: Float, y2: Float, viewWidth: Int, viewHeight: Int) {
+    private fun normalizeAndClampRect(
+        rect: RectF,
+        x1: Float,
+        y1: Float,
+        x2: Float,
+        y2: Float,
+        viewWidth: Int,
+        viewHeight: Int,
+    ) {
         rect.left = Math.min(x1, x2).coerceIn(0f, viewWidth.toFloat())
         rect.top = Math.min(y1, y2).coerceIn(0f, viewHeight.toFloat())
         rect.right = Math.max(x1, x2).coerceIn(0f, viewWidth.toFloat())
@@ -327,10 +323,9 @@ class CroppingFragment : Fragment() {
             return
         }
         // Ensure overlay is visible if rect is not empty
-        if (binding.selectionOverlay.visibility != View.VISIBLE && (selectionRect.width() > 0 && selectionRect.height() >0)) {
+        if (binding.selectionOverlay.visibility != View.VISIBLE && (selectionRect.width() > 0 && selectionRect.height() > 0)) {
             binding.selectionOverlay.visibility = View.VISIBLE
         }
-
 
         val params = binding.selectionOverlay.layoutParams as? ViewGroup.MarginLayoutParams
         if (params == null) {
@@ -346,9 +341,7 @@ class CroppingFragment : Fragment() {
         binding.selectionOverlay.layoutParams = params
         // binding.selectionOverlay.requestLayout() // Often implicitly handled by setting layoutParams on some views
         Log.d("CroppingFragment", "Overlay updated: L=${params.leftMargin}, T=${params.topMargin}, W=${params.width}, H=${params.height}")
-
     }
-
 
     override fun onDestroyView() {
         super.onDestroyView()

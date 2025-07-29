@@ -11,7 +11,9 @@ import java.io.File
 import java.util.Locale
 import kotlin.concurrent.Volatile
 
-class ExtractText(application: Application) : AndroidViewModel(application) {
+class ExtractText(
+    application: Application,
+) : AndroidViewModel(application) {
     private lateinit var tessApi: TessBaseAPI
 
     val result = MutableLiveData<String>() // General result - consider its purpose
@@ -20,14 +22,8 @@ class ExtractText(application: Application) : AndroidViewModel(application) {
         private set
 
     // --- Specific area results ---
-    private val _titleResult = MutableLiveData<String?>()
-    val titleResult: LiveData<String?> = _titleResult
-
-    private val _ingredientsResult = MutableLiveData<String?>()
-    val ingredientsResult: LiveData<String?> = _ingredientsResult
-
-    private val _preparationResult = MutableLiveData<String?>()
-    val preparationResult: LiveData<String?> = _preparationResult
+    private val _timeResult = MutableLiveData<String?>()
+    val timeResult: LiveData<String?> = _timeResult
 
     // --- Processing State LiveData ---
     private val _processing = MutableLiveData<Boolean>() // Overall processing state of the ViewModel for any area
@@ -69,7 +65,11 @@ class ExtractText(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun initTesseract(dataPath: String, language: String, engineMode: Int) {
+    fun initTesseract(
+        dataPath: String,
+        language: String,
+        engineMode: Int,
+    ) {
         if (::tessApi.isInitialized && isInitialized) {
             Log.i(TAG, "Tesseract is already initialized.")
             // Optionally re-initialize if parameters change, or just return
@@ -84,12 +84,14 @@ class ExtractText(application: Application) : AndroidViewModel(application) {
         }
 
         _progress.postValue("Initializing Tesseract...")
-        tessApi = TessBaseAPI { progressValues: TessBaseAPI.ProgressValues ->
-            _progress.postValue("Progress: " + progressValues.percent + " %")
-        }
+        tessApi =
+            TessBaseAPI { progressValues: TessBaseAPI.ProgressValues ->
+                _progress.postValue("Progress: " + progressValues.percent + " %")
+            }
         Log.i(
-            TAG, "Initializing Tesseract with: dataPath = [$dataPath], " +
-                    "language = [$language], engineMode = [$engineMode]"
+            TAG,
+            "Initializing Tesseract with: dataPath = [$dataPath], " +
+                "language = [$language], engineMode = [$engineMode]",
         )
         try {
             // It's good practice to run init on a background thread if it's potentially long
@@ -98,9 +100,11 @@ class ExtractText(application: Application) : AndroidViewModel(application) {
             if (isInitialized) {
                 _progress.postValue(
                     String.format(
-                        Locale.ENGLISH, "Tesseract %s (%s) initialized.",
-                        tessApi.version, tessApi.libraryFlavor
-                    )
+                        Locale.ENGLISH,
+                        "Tesseract %s (%s) initialized.",
+                        tessApi.version,
+                        tessApi.libraryFlavor,
+                    ),
                 )
             } else {
                 Log.e(TAG, "Tesseract initialization failed (init returned false).")
@@ -117,7 +121,10 @@ class ExtractText(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun recognizeImage(imagePath: File, areaType: String) {
+    fun recognizeImage(
+        imagePath: File,
+        areaType: String,
+    ) {
         val areaTypeLower = areaType.toLowerCase(Locale.ROOT)
 
         if (!isInitialized) {
@@ -141,13 +148,12 @@ class ExtractText(application: Application) : AndroidViewModel(application) {
 
         // Clear previous specific result for the current areaType
         when (areaTypeLower) {
-            "title" -> _titleResult.postValue(null)
-            "ingredients" -> _ingredientsResult.postValue(null)
-            "preparation" -> _preparationResult.postValue(null)
+            "time" -> _timeResult.postValue(null)
         }
         _progress.postValue("Processing $areaTypeLower...")
 
-        Thread { // Tesseract operations should be off the main thread
+        Thread {
+            // Tesseract operations should be off the main thread
             var success = false
             try {
                 tessApi.setImage(imagePath)
@@ -160,9 +166,7 @@ class ExtractText(application: Application) : AndroidViewModel(application) {
 
                 if (!stopped) {
                     when (areaTypeLower) {
-                        "title" -> _titleResult.postValue(text)
-                        "ingredients" -> _ingredientsResult.postValue(text)
-                        "preparation" -> _preparationResult.postValue(text)
+                        "time" -> _timeResult.postValue(text)
                         else -> {
                             Log.w(TAG, "Unrecognized areaType: $areaTypeLower for text: $text")
                             this.result.postValue("For $areaTypeLower (unrecognized): $text")
@@ -172,8 +176,9 @@ class ExtractText(application: Application) : AndroidViewModel(application) {
                     _progress.postValue(
                         String.format(
                             Locale.ENGLISH,
-                            "$areaTypeLower: Completed in %.3fs.", (duration / 1000f)
-                        )
+                            "$areaTypeLower: Completed in %.3fs.",
+                            (duration / 1000f),
+                        ),
                     )
                     success = true
                 } else {
@@ -210,14 +215,15 @@ class ExtractText(application: Application) : AndroidViewModel(application) {
         }.start()
     }
 
-    private fun postErrorToRelevantLiveData(areaType: String, errorMessage: String) {
+    private fun postErrorToRelevantLiveData(
+        areaType: String,
+        errorMessage: String,
+    ) {
         val fullError = "Error for $areaType: $errorMessage"
         // Ensure this runs on the main thread if observers are sensitive
         // _progress.postValue(fullError) // Or a specific error LiveData
         when (areaType.toLowerCase(Locale.ROOT)) {
-            "title" -> _titleResult.postValue(fullError)
-            "ingredients" -> _ingredientsResult.postValue(fullError)
-            "preparation" -> _preparationResult.postValue(fullError)
+            "time" -> _timeResult.postValue(fullError)
             else -> this.result.postValue(fullError)
         }
     }
