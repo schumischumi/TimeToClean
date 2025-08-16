@@ -72,7 +72,7 @@ class ImageSelectionFragment : Fragment() {
                         placeholder(R.drawable.ic_launcher_background) // Optional placeholder
                         error(com.google.android.material.R.drawable.mtrl_ic_error) // Optional error drawable
                     }
-                    binding.buttonNext.isEnabled = true
+                    navigateToNextFragment()
                 } else {
                     Log.d("ImageSelectionFragment", "Image capture failed or was cancelled.")
                     // tempImageFileForCamera might still exist, consider deleting if not needed
@@ -92,7 +92,7 @@ class ImageSelectionFragment : Fragment() {
                         placeholder(R.drawable.ic_launcher_background)
                         error(com.google.android.material.R.drawable.mtrl_ic_error)
                     }
-                    binding.buttonNext.isEnabled = true
+                    navigateToNextFragment()
                 } ?: Log.d("ImageSelectionFragment", "No image selected from storage.")
             }
     }
@@ -117,13 +117,6 @@ class ImageSelectionFragment : Fragment() {
 
         binding.buttonLoadImage.setOnClickListener {
             checkCameraPermissionAndOpen()
-        }
-
-        binding.buttonNext.setOnClickListener {
-            currentPhotoUri?.let { uri ->
-                val action = ImageSelectionFragmentDirections.actionFirstFragmentToCroppingFragment(uri.toString())
-                findNavController().navigate(action)
-            } ?: Toast.makeText(requireContext(), "Please select an image first.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -245,6 +238,13 @@ class ImageSelectionFragment : Fragment() {
             )
         Log.d("ImageSelectionFragment", "Image file created at: ${imageFile.absolutePath}")
         return imageFile
+    }
+
+    private fun navigateToNextFragment() {
+        currentPhotoUri?.let { uri ->
+            val action = ImageSelectionFragmentDirections.actionFirstFragmentToCroppingFragment(uri.toString())
+            findNavController().navigate(action)
+        } ?: Toast.makeText(requireContext(), "Please select an image first.", Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroyView() {
