@@ -6,48 +6,31 @@
     android:layout_height="match_parent"
     tools:context=".ImageSelectionFragment">
 
-    <ImageView
-        android:id="@+id/imageViewPreview"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
-        android:contentDescription="Preview of the selected image"
-        android:scaleType="fitCenter"
-        app:layout_constraintBottom_toTopOf="@+id/buttonLoadImage"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:srcCompat="@tools:sample/backgrounds/scenic" />
-
     <Button
         android:id="@+id/buttonLoadImage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="48dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="80dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="32dp"
         android:layout_marginBottom="83dp"
-        android:text="Select Image"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/buttonNext"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageViewPreview" />
-
-    <Button
-        android:id="@+id/buttonNext"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="80dp"
-        android:layout_marginEnd="64dp"
-        android:layout_marginBottom="80dp"
-        android:text="Next"
+        android:text="Take a Picture"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/buttonLoadImage"
-        app:layout_constraintTop_toBottomOf="@+id/imageViewPreview"
-        app:layout_constraintVertical_bias="0.914" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView2" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="350dp"
+        android:layout_height="242dp"
+        android:layout_marginStart="55dp"
+        android:layout_marginEnd="56dp"
+        android:layout_marginBottom="72dp"
+        android:text="This is a very simple app to create a timer for washing machines, winding machines and basically everything with a 7 segment display.\n\nWorkflow:\n\n1. Take a picture of the display\n2. Select the area that shows the duration\n    (i.e. 2:30)\n3. Correct the time\n    (i.e. add 10 min because washing machines are liars)\n4. The app will create a timer to remind you when your landry is done."
+        app:layout_constraintBottom_toTopOf="@+id/buttonLoadImage"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

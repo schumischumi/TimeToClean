@@ -22,7 +22,7 @@
     <fragment
         android:id="@+id/croppingFragment"
         android:name="com.example.timetoclean.CroppingFragment"
-        android:label="fragment_cropping"
+        android:label="@string/fragment_cropping_label"
         tools:layout="@layout/fragment_cropping" >
         <argument
             android:name="imageUri"

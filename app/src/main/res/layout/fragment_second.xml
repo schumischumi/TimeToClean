@@ -6,87 +6,34 @@
     android:layout_height="match_parent"
     >
 
-    <ImageView
-        android:id="@+id/imageViewTimePreview"
-        android:layout_width="111dp"
-        android:layout_height="109dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginBottom="18dp"
-        android:contentDescription="Preview of the cropped image"
-        android:scaleType="fitCenter"
-        app:layout_constraintBottom_toTopOf="@+id/textViewProcessingStatus"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
     <TextView
         android:id="@+id/textViewProcessingStatus"
         android:layout_width="279dp"
         android:layout_height="21dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/buttonProcessCropped"
+        android:layout_marginTop="8dp"
+        android:textAlignment="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageViewTimePreview"
+        app:layout_constraintTop_toTopOf="parent"
         tools:text="Status: Waiting for cropped image" />
 
     <TextView
         android:id="@+id/textViewTimeResult"
         android:layout_width="380dp"
-        android:layout_height="52dp"
+        android:layout_height="21dp"
         android:layout_marginStart="18dp"
         android:layout_marginTop="18dp"
         android:layout_marginEnd="16dp"
+        android:layout_marginBottom="632dp"
         android:isScrollContainer="true"
         android:text="TextView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/Titel" />
-
-    <TextView
-        android:id="@+id/Titel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="192dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginEnd="192dp"
-        android:layout_marginBottom="12dp"
-        android:text="Titel"
-        app:layout_constraintBottom_toTopOf="@+id/textViewTimeResult"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/buttonProcessCropped"
-        tools:text="Titel" />
-
-    <Button
-        android:id="@+id/buttonProcessCropped"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="162dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginEnd="159dp"
-        android:text="Button"
+        android:textAlignment="center"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textViewProcessingStatus" />
-
-    <Button
-        android:id="@+id/buttonPicker"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="56dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginBottom="275dp"
-        android:text="PickTime"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.505"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textViewTimeResult"
-        app:layout_constraintVertical_bias="1.0" />
+        app:layout_constraintTop_toBottomOf="@+id/textViewProcessingStatus"
+        app:layout_constraintVertical_bias="0.0" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

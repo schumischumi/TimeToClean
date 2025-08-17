@@ -29,6 +29,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 
 class ResultFragment : Fragment() {
+    @Suppress("ktlint:standard:backing-property-naming")
     private var _binding: FragmentSecondBinding? = null
     private lateinit var extractTextViewModel: ExtractText
     private val recipeAreasViewModel: RecipeAreasViewModel by activityViewModels()
@@ -122,21 +123,17 @@ class ResultFragment : Fragment() {
                     binding.textViewProcessingStatus.text = "No recipe areas available to process."
                 }
             } else if (areas != null) {
-                binding.buttonProcessCropped.isEnabled = false
                 var status = "Waiting for: "
                 if (areas.timeUri == null) status += "Time"
                 binding.textViewProcessingStatus.text = status.trimEnd(',', ' ')
             } else {
-                binding.buttonProcessCropped.isEnabled = false
                 binding.textViewProcessingStatus.text = "No areas available."
-                binding.imageViewTimePreview.setImageDrawable(null)
             }
         }
 
         recipeAreasViewModel.cropError.observe(viewLifecycleOwner) { error ->
             error?.let {
                 binding.textViewProcessingStatus.text = "Cropping Error: $it"
-                binding.buttonProcessCropped.isEnabled = false
             }
         }
 
@@ -149,7 +146,6 @@ class ResultFragment : Fragment() {
                 binding.textViewProcessingStatus.text = "OCR engine ready. Waiting for areas."
             } else {
                 binding.textViewProcessingStatus.text = "OCR engine failed to initialize. Check logs."
-                binding.buttonProcessCropped.isEnabled = false // Can't process if not initialized
             }
         }
 
@@ -179,6 +175,7 @@ class ResultFragment : Fragment() {
                 Log.i("SecondFragment", "Time OCR Data: $timeText")
                 parseTimerStringAndShowPicker(timeText)
             } else {
+                binding.textViewTimeResult.text = "Was not able to detect time. Take a new picture."
                 Log.i("SecondFragment", "Time OCR Data received null (likely cleared).")
             }
         }

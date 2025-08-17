@@ -30,6 +30,7 @@ import java.util.Date
 import java.util.Locale
 
 class ImageSelectionFragment : Fragment() {
+    @Suppress("ktlint:standard:backing-property-naming")
     private var _binding: FragmentFirstBinding? = null
     private val binding get() = _binding!!
 
@@ -68,10 +69,6 @@ class ImageSelectionFragment : Fragment() {
                         "Image captured successfully. URI: $currentPhotoUri, File: ${tempImageFileForCamera?.absolutePath}",
                     )
                     currentPhotoUri = Uri.fromFile(tempImageFileForCamera) // Ensure currentPhotoUri is set from the file
-                    binding.imageViewPreview.load(currentPhotoUri) {
-                        placeholder(R.drawable.ic_launcher_background) // Optional placeholder
-                        error(com.google.android.material.R.drawable.mtrl_ic_error) // Optional error drawable
-                    }
                     navigateToNextFragment()
                 } else {
                     Log.d("ImageSelectionFragment", "Image capture failed or was cancelled.")
@@ -88,10 +85,6 @@ class ImageSelectionFragment : Fragment() {
                 uri?.let {
                     Log.d("ImageSelectionFragment", "Image selected from storage: $it")
                     currentPhotoUri = it
-                    binding.imageViewPreview.load(currentPhotoUri) {
-                        placeholder(R.drawable.ic_launcher_background)
-                        error(com.google.android.material.R.drawable.mtrl_ic_error)
-                    }
                     navigateToNextFragment()
                 } ?: Log.d("ImageSelectionFragment", "No image selected from storage.")
             }
@@ -111,9 +104,6 @@ class ImageSelectionFragment : Fragment() {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-
-        // Initially disable next button until an image is loaded
-        binding.buttonNext.isEnabled = false
 
         binding.buttonLoadImage.setOnClickListener {
             checkCameraPermissionAndOpen()

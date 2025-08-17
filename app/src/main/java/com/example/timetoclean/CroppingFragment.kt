@@ -123,18 +123,6 @@ class CroppingFragment : Fragment() {
             }
             findNavController().navigate(R.id.crop_to_second)
         }
-
-        // Example: Assume a button 'buttonDoneAllCropping'
-        binding.buttonDoneAllCropping.setOnClickListener {
-            if (recipeAreasViewModel.areAllAreasSet()) {
-                // Navigate or signal completion
-                // findNavController().navigate(R.id.action_croppingFragment_to_processingFragment)
-                Log.i("CroppingFragment", "All areas cropped and set in ViewModel.")
-            } else {
-                recipeAreasViewModel.setCropError("Not all areas have been selected yet.")
-            }
-            findNavController().navigate(R.id.crop_to_second)
-        }
     }
 
     private fun updateUiForCurrentStage() {
@@ -144,16 +132,12 @@ class CroppingFragment : Fragment() {
 
         when (currentCropStage) {
             CropStage.SELECTING_TIME -> {
-                binding.textViewCurrentSelectionPrompt.text = "Select Time Area"
-                binding.buttonDoneAllCropping.visibility = View.GONE
-                binding.buttonConfirmCurrentArea.text = "Confirm Time Area"
+                binding.textViewCurrentSelectionPrompt.text =
+                    "Select only the area with the duration.\n If you selected the wrong area, simply try again."
+                binding.buttonConfirmCurrentArea.text = "Confirm Area"
             }
             CropStage.DONE -> {
-                binding.textViewCurrentSelectionPrompt.text = "All areas selected!"
-                binding.buttonConfirmCurrentArea.visibility = View.GONE
-                binding.selectionOverlay.visibility = View.GONE
-                binding.buttonDoneAllCropping.visibility = View.VISIBLE
-                binding.buttonDoneAllCropping.isEnabled = recipeAreasViewModel.areAllAreasSet()
+                binding.textViewCurrentSelectionPrompt.text = "Duration Area was successfully selected"
             }
         }
     }
