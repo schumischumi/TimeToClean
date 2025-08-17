@@ -114,6 +114,14 @@ class CroppingFragment : Fragment() {
                     )
                 }
             }
+            if (recipeAreasViewModel.areAllAreasSet()) {
+                // Navigate or signal completion
+                // findNavController().navigate(R.id.action_croppingFragment_to_processingFragment)
+                Log.i("CroppingFragment", "All areas cropped and set in ViewModel.")
+            } else {
+                recipeAreasViewModel.setCropError("Not all areas have been selected yet.")
+            }
+            findNavController().navigate(R.id.crop_to_second)
         }
 
         // Example: Assume a button 'buttonDoneAllCropping'

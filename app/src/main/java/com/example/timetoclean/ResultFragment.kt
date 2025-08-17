@@ -35,6 +35,9 @@ class ResultFragment : Fragment() {
     private var currentCroppedImageUri: Uri? = null
     private var currentRecipeAreas: CropAreas? = null
     private lateinit var timePicker: MaterialTimePicker
+    private var ocrProcessingQueue: MutableList<Pair<File, String>> = mutableListOf()
+    private var currentOcrQueueIndex = 0
+    private var totalMillisForTimer: Long = 0L
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -50,6 +53,25 @@ class ResultFragment : Fragment() {
             ViewModelProvider(requireActivity())[ExtractText::class.java] // Example
         return binding.root
     }
+
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            if (isGranted) {
+                // Permission is granted. Start the service with the stored time.
+                if (totalMillisForTimer > 0L) {
+                    TimerService.startTimerService(requireContext(), totalMillisForTimer)
+                }
+            } else {
+                // Explain to the user that the feature is unavailable
+                Toast
+                    .makeText(
+                        requireContext(),
+                        "Notification permission denied. Timer cannot show notifications.",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                // Optionally, you could guide them to settings, but be respectful of their choice.
+            }
+        }
 
     override fun onViewCreated(
         view: View,
